@@ -1,0 +1,106 @@
+#include<iostream>
+#include <string>
+#include <fstream>
+#include <time.h>
+using namespace std;
+
+void random_Data_Gen(int Width, string &out) {
+	out = "";
+	int temp = 0;
+	for (int i = 0; i < Width; i++) {
+		temp = rand() % 2;
+		if (temp == 0)
+			out += "0";
+
+		else
+			out += "1";
+	}
+}
+
+int BIAc(int Width, string &Pre_Input, string &Input){
+	int Signal_Similurity=0;
+	int Signal_Diff = 0;
+	for (int i = 0; i <= Width; i++) {
+		if (Pre_Input[i] == Input[i])
+			Signal_Similurity++;
+		else
+			Signal_Diff++;
+	}
+	if (Signal_Similurity < Signal_Diff)
+	 {
+		for (int i = 0; i <= Width; i++)
+		{
+			if (Input[i] == '0')
+				Input[i] = '1';
+			else
+				Input[i] = '0';
+		}
+		return Signal_Similurity;
+	}
+	else
+		return Signal_Diff;
+}
+
+int WBIAc(int Width, string &Pre_Input, string &Input) {
+	int Signal_Similurity = 0;
+	for (int i = 0; i < Width; i++) {
+		if (Pre_Input[i] == Input[i])
+			Signal_Similurity++;
+	}
+	Pre_Input = Input;
+
+	return (Width-Signal_Similurity);
+}
+
+void Calc(int &itr, int &Bus_Width, int &Subbus_Width, int &BI_Ac, int &WBI_Ac) {
+	string Data;
+	string Pre_Data;
+	int NumberofSubbus = Bus_Width / Subbus_Width;
+	string *Subbus = new string[NumberofSubbus];
+	string *Pre_Subbus = new string[NumberofSubbus];
+
+	random_Data_Gen(Bus_Width, Pre_Data);
+
+	for (int j = 0; j < NumberofSubbus; j++)
+	{
+		Pre_Subbus[j] = Pre_Data.substr(j*Subbus_Width, Subbus_Width) + "0"; // 0 afzooneh
+	}
+
+	for (int i = 0; i < itr; i++) {
+		random_Data_Gen(Bus_Width, Data);
+		for (int j = 0; j < NumberofSubbus; j++) {
+			Subbus[j] = Data.substr(j*Subbus_Width, Subbus_Width) + "0";
+			BI_Ac += BIAc(Subbus_Width, Pre_Subbus[j],Subbus[j]);
+			Pre_Subbus[j] = Subbus[j];
+		}
+
+		WBI_Ac += WBIAc(Bus_Width, Pre_Data, Data);
+	}
+}
+
+int main() {
+
+	int Bus_Width, Subbus_Width;
+	int BI_Ac = 0, WBI_Ac = 0;
+  int itr = 10000;
+
+	float reduction, overhead, Gain;
+
+for ( int i = 16 ; i <= 128 ; i=i*2)
+ {
+	 for ( int j = 2 ; j <= i ; j = j*2 )
+	 {
+		 Bus_Width = i;
+		 Subbus_Width = j;
+		 Calc(itr, Bus_Width, Subbus_Width, BI_Ac, WBI_Ac);
+
+		 reduction = 1 - (foalt)(BI_Ac/WBI_Ac);
+		 overhead = (float)(Bus_Width/Subbus_Width)/Bus_Width ;
+		 Gain = (float)reduction / overhead;
+
+		 cout << "Bus With: " << Bus_Width << " ; SubBus With: " << Subbus_Width << " ; reduction: " << reduction << " ; overhead: " << overhead << " ; Gain: " << Gain << endl;
+	}
+}
+
+	return 0;
+}
